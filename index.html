@@ -37,6 +37,12 @@
 
 <body>
     <div id="marc-map">
+        <!-- data selection for interaction -->
+        <script>
+            let year = 2009;
+            let gender = 'M';
+            let quartile = 3;
+        </script>
         <!-- marc - map -->
         <svg id="map" width="600" height="300" style="border: 1px solid black;"></svg>
         <svg id="map-legend" width="140" height="160" style="border: 1px solid black;"></svg>
@@ -56,11 +62,11 @@
 
             async function requestData() {
                 let data = await d3.csv(file, d3.autoType);
-                console.log(data);
+                // console.log(data);
 
                 let usa = await d3.json('us-smaller.json');
                 let states = topojson.feature(usa, usa.objects.states);
-                console.log(states);
+                // console.log(states);
                 let statesMesh = topojson.mesh(usa, usa.objects.states);
                 let projection = d3.geoAlbersUsa().fitSize([mapWidth, mapHeight], states);
                 let path = d3.geoPath().projection(projection);
@@ -80,11 +86,8 @@
                 // dictionary for coloring the states based on life expectancy
                 let stateLifeExpectancy = {};
                 // change values based on interaction
-                let year = 2003;
-                let gender = 'm';
-                let quartile = 3;
                 generateDictionary(year, gender, quartile);
-                console.log(stateLifeExpectancy);
+                // console.log(stateLifeExpectancy);
 
                 // color scale
                 let colorScale = d3.scaleQuantile()
@@ -138,30 +141,17 @@
             let chartArea = svg.append("g").attr("id", "points").attr("transform", `translate(${chartPadding.left},${chartPadding.top})`);
 
             d3.csv("./health_ineq_online_table_5.csv", d3.autoType)
-                .then((data) => {
-                    let unique = (value, index, self) => {
-                        return self.indexOf(value) === index;
-                    }
-                    let unique_states = [];
-                    let life_expectancies = [];
-                    data.forEach(d => {
-                        if (!unique_states.includes(d['statename'])) {
-                            life_expectancies.push(d["le_agg_q1_F"]);
-                            unique_states.push(d['statename']);
-                        }
-                    });
-                    life_expectancies = life_expectancies.sort();
-                    life_expectancies = life_expectancies.slice(0, 3).concat(life_expectancies.slice(-3));
-                    let final = [];
-                    life_expectancies.forEach(age => {
-                        data.forEach(d => {
-                            if (age == d["le_agg_q1_F"]) {
-                                final.push(d);
-                            }
-                        })
-                    })
+                .then(data => {
+                    // data processing
+                    // -- variables for selecting data
+                    let barChartQuery = `le_agg_q${quartile}_${gender}`;
+                    // -- <final> will store six items, which satisfy the (year, gender, quartile) requirement
+                    // -- the six items will be with top 3 life expectancy and bottom 3 life expectancy
+                    let filteredData = data.filter(d => d.year === year);
+                    filteredData.sort((a, b) => a[barChartQuery] - b[barChartQuery]);
+                    let final = filteredData.slice(0, 3).concat(filteredData.slice(-3));
 
-                    const lifeExtent = d3.extent(final, d => d["le_agg_q1_F"]);
+                    const lifeExtent = d3.extent(final, d => d[barChartQuery]);
                     const lifeScale = d3.scaleLinear()
                         .domain([lifeExtent[0] - 1, lifeExtent[1] + 1])
                         .range([chartHeight, 0]);
@@ -198,8 +188,8 @@
                         .attr('class', 'bar')
                         .attr("fill", "#3C60A9")
                         .attr("x", d => stateScale(d['statename']))
-                        .attr("y", d => lifeScale(d["le_agg_q1_F"]))
-                        .attr("height", d => lifeScale(lifeExtent[0] - 1) - lifeScale(d["le_agg_q1_F"]))
+                        .attr("y", d => lifeScale(d[barChartQuery]))
+                        .attr("height", d => lifeScale(lifeExtent[0] - 1) - lifeScale(d[barChartQuery]))
                         .attr("width", stateScale.bandwidth());
                 });
         </script>
