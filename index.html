@@ -15,6 +15,7 @@
             font-family: 'Inter', 'Helvetica', sans-serif;
             color: rgb(36, 36, 36);
         }
+
         .state {
             fill: lightgrey;
         }
@@ -40,10 +41,12 @@
         datalist {
             display: inline;
         }
+
         option {
             display: inline;
             margin-right: 16px;
         }
+
         #year-slider {
             width: 650px;
             margin-left: 11px;
@@ -52,22 +55,29 @@
         .gender-radio {
             display: inline;
         }
+
         #tickmarks {
             font-size: 11px;
         }
+
         .selectors {
+            height: 70px;
+            border: 1px solid grey;
             display: inline-block;
-            vertical-align: top;
-            margin-right: 5%;
+            vertical-align: middle;
+            margin-right: 0;
+            padding: 5px;
         }
     </style>
 </head>
 
 <body>
-    <h2>Life Expectancy in United States based on Year, Gender, and Income Quartile</h2>
+    <h1>Life Expectancy in United States based on Year, Gender, and Income Quartile</h1>
+    <h3>Erika Hauschild (esh79), Haoran Cui (hc2223), Siqi Qian (sq85), Marc Liu (yl2868)</h3>
+    <hr />
     <div class="selectors">
-        <label for="year-slider">Year</label><br>
-        <input id="year-slider" type="range" min="2001" max="2014" step="1" value="2001" list="tickmarks">
+        Year<br>
+        <input id="year-slider" width="400" type="range" min="2001" max="2014" step="1" value="2001" list="tickmarks">
         <br>
         <datalist id="tickmarks">
             <option value="2001" label="2001"></option>
@@ -85,19 +95,13 @@
             <option value="2013" label="2013"></option>
             <option value="2014" label="2014"></option>
         </datalist>
-        <br>
-        <br>
-        <!-- <select id="gender-dropdown" style="width:70px;" value="M">
-            <option value="M">Male</option>
-            <option value="F">Female</option>
-        </select> -->
     </div>
-        <div class="selectors">
+    <div class="selectors">
         Gender<br>
         <input type="radio" id="male" value="M" name="gender" class="gender-radio" checked>
-        <label for="male">M</label><br>
+        <label for="male">M</label><br>
         <input type="radio" id="female" value="F" name="gender" class="gender-radio">
-        <label for="female">F</label>
+        <label for="female">F</label>
     </div>
     <div class="selectors">
         Income Quartile<br>
@@ -109,15 +113,15 @@
         </select>
         <br>
     </div>
-<br>
-<br>
+    <br>
+    <br>
     <div class="marc-map">
-        <svg id="map" width="600" height="300" style="border: 1px solid black;"></svg>
-        <svg id="map-legend" width="140" height="250" style="border: 1px solid black;"></svg>
+        <svg id="map" width="700" height="300" style="border: 1px solid black;"></svg>
+        <svg id="map-legend" width="200" height="300" style="border: 1px solid black;"></svg>
     </div>
     <h3>Life Expectancy of Bottom 3 States and Top 3 States</h3>
     <div class="erika-barchart">
-        <svg id="barchart" width="600" height="300" style="border: 1px solid black;"></svg>
+        <svg id="barchart" width="907" height="300" style="border: 1px solid black;"></svg>
     </div>
 
     <script>
@@ -183,7 +187,7 @@
             let legendGen = d3.legendColor()
                 .labelFormat(d3.format(".2f"))
                 .title("Life Expectancy (in years)")
-                .titleWidth(100)
+                .titleWidth(160)
                 .scale(colorScale);
 
             legend1.select(".legendQuant")
@@ -215,7 +219,7 @@
             let data = await d3.csv('health_ineq.csv', d3.autoType);
             let filteredData = data.filter(d => d.year === year);
             filteredData.sort((a, b) => a[barChartQuery] - b[barChartQuery]);
-            let bottom_3 = filteredData.slice(0,3);
+            let bottom_3 = filteredData.slice(0, 3);
             let top_3 = filteredData.slice(-3);
             let final = bottom_3.concat(top_3);
 
@@ -234,12 +238,12 @@
             let leftGridlines = d3.axisLeft(lifeScale)
                 .tickSize(-chartWidth - 10)
                 .tickFormat("")
-            
+
             annotations.append("g")
                 .attr("class", "y axis")
                 .attr("transform", `translate(${chartPadding.left - 10},${chartPadding.top})`)
                 .call(leftAxis)
-            svg2.append("text")             
+            svg2.append("text")
                 .style("text-anchor", "end")
                 .attr("transform", "rotate(-90) translate(-60, 19)")
                 .style("font-size", "13px")
@@ -254,11 +258,11 @@
                 .attr("class", "x axis")
                 .attr("transform", `translate(${chartPadding.left},${chartHeight + chartPadding.top + 10})`)
                 .call(bottomAxis);
-            chartArea.append("text")             
-                     .attr("transform","translate(" + (chartWidth/2) + " ," + (chartHeight + chartPadding.top + 30) + ")")
-                     .style("text-anchor", "middle")
-                     .style("font-size", "13px")
-                     .text("States");
+            chartArea.append("text")
+                .attr("transform", "translate(" + (chartWidth / 2) + " ," + (chartHeight + chartPadding.top + 30) + ")")
+                .style("text-anchor", "middle")
+                .style("font-size", "13px")
+                .text("States");
             chartArea.selectAll('rect.bottom')
                 .data(bottom_3)
                 .join('rect')
