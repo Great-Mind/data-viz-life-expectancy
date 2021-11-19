@@ -45,16 +45,19 @@
         <svg id="map-legend" width="140" height="160" style="border: 1px solid black;"></svg>
     </div>
 
-    <script>
-        let svg1 = d3.select('#map');
-        let width = svg1.attr('width');
-        let height = svg1.attr('height');
-        let padding = { top: 20, right: 20, bottom: 20, left: 20 };
-        let mapWidth = width - padding.left - padding.right;
-        let mapHeight = height - padding.top - padding.bottom;
+    <div>
+        <svg id="barchart" width="600" height="300" style="border: 1px solid black;"></svg>
+    </div>
 
+    <script>
         // FUNC1: map chart function
         async function drawMapChart(year, gender, quartile) {
+            let svg1 = d3.select('#map');
+            let width = svg1.attr('width');
+            let height = svg1.attr('height');
+            let padding = { top: 20, right: 20, bottom: 20, left: 20 };
+            let mapWidth = width - padding.left - padding.right;
+            let mapHeight = height - padding.top - padding.bottom;
             // color scale
             let colorScale = d3.scaleQuantile()
                 .domain([71.78865, 92.63532])
@@ -115,12 +118,85 @@
             legend1.select(".legendQuant")
                 .call(legendGen);
         };
-        drawMapChart(2001, 'M', 4);
+        drawMapChart(2001, 'M', 1);
+    </script>
+    <script>
+        // FUNC2: bar chart function
+        async function drawBarChart(year, gender, quartile) {
+            
+        
+            year = Number(year);
+            gender = gender.toUpperCase();
+            quartile = Number(quartile);
+            
+            let barChartQuery = `le_agg_q${quartile}_${gender}`;
 
+
+            let svg2 = d3.select("svg#barchart").html("");;
+
+            let width = svg2.attr('width');
+            let height = svg2.attr('height');
+            let chartPadding = { top: 20, right: 20, bottom: 40, left: 40 };
+            let chartWidth = width - chartPadding.left - chartPadding.right;
+            let chartHeight = height - chartPadding.top - chartPadding.bottom;
+
+            let annotations = svg2.append("g").attr("id", "annotations");
+            let chartArea = svg2.append("g").attr("id", "points").attr("transform", `translate(${chartPadding.left},${chartPadding.top})`);
+
+            let data = await d3.csv('health_ineq_online_table_5.csv', d3.autoType);
+            let filteredData = data.filter(d => d.year === year);
+            filteredData.sort((a, b) => a[barChartQuery] - b[barChartQuery]);
+            let final = filteredData.slice(0, 3).concat(filteredData.slice(-3));
+
+            const lifeExtent = d3.extent(final, d => d[barChartQuery]);
+            const lifeScale = d3.scaleLinear()
+                .domain([lifeExtent[0] - 1, lifeExtent[1] + 1])
+                .range([chartHeight, 0]);
+
+            let states = d3.map(final, d => d['statename']);
+            const stateScale = d3.scaleBand()
+                .domain(states)
+                .range([0, chartWidth])
+                .padding(0.1);
+
+            let leftAxis = d3.axisLeft(lifeScale);
+            let leftGridlines = d3.axisLeft(lifeScale)
+                .tickSize(-chartWidth - 10)
+                .tickFormat("")
+            annotations.append("g")
+                .attr("class", "y axis")
+                .attr("transform", `translate(${chartPadding.left - 10},${chartPadding.top})`)
+                .call(leftAxis)
+            annotations.append("g")
+                .attr("class", "y gridlines")
+                .attr("transform", `translate(${chartPadding.left - 10},${chartPadding.top})`)
+                .call(leftGridlines);
+
+            let bottomAxis = d3.axisBottom()
+                .scale(stateScale);
+            annotations.append("g")
+                .attr("class", "x axis")
+                .attr("transform", `translate(${chartPadding.left},${chartHeight + chartPadding.top + 10})`)
+                .call(bottomAxis);
+
+            chartArea.selectAll('rect.bar')
+                .data(final)
+                .join('rect')
+                .attr('class', 'bar')
+                .attr("fill", "#3C60A9")
+                .attr("x", d => stateScale(d['statename']))
+                .attr("y", d => lifeScale(d[barChartQuery]))
+                .attr("height", d => lifeScale(lifeExtent[0] - 1) - lifeScale(d[barChartQuery]))
+                .attr("width", stateScale.bandwidth());
+        };
+        drawBarChart(2001, 'M', 1);
+    </script>
+    <script>
         // INTERACTION: slider
         d3.select("input#slider")
             .on("input", function () {
                 drawMapChart(this.value, 'M', 3);
+                drawBarChart(this.value, 'M', 3);
             });
     </script>
 </body>
