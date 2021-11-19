@@ -37,15 +37,20 @@
 
 <body>
     <div class="interaction-slider">
-        <input id="slider" width="200" type="range" min="2001" max="2014" step="1" value="2001">
-    </div>
+        <input id="year-slider" width="200" type="range" min="2001" max="2014" step="1" value="2001">
+
+        <select id="gender-dropdown" style="width:70px;" value="M">
+          <option value="M" selected>Male</option>
+          <option value="F">Female</option>
+        </select>
+    </div>    
 
     <div class="marc-map">
         <svg id="map" width="600" height="300" style="border: 1px solid black;"></svg>
         <svg id="map-legend" width="140" height="160" style="border: 1px solid black;"></svg>
     </div>
 
-    <div>
+    <div class="erika-barchart">
         <svg id="barchart" width="600" height="300" style="border: 1px solid black;"></svg>
     </div>
 
@@ -123,8 +128,6 @@
     <script>
         // FUNC2: bar chart function
         async function drawBarChart(year, gender, quartile) {
-            
-        
             year = Number(year);
             gender = gender.toUpperCase();
             quartile = Number(quartile);
@@ -193,10 +196,27 @@
     </script>
     <script>
         // INTERACTION: slider
-        d3.select("input#slider")
+        d3.select("input#year-slider")
             .on("input", function () {
-                drawMapChart(this.value, 'M', 3);
-                drawBarChart(this.value, 'M', 3);
+                // set
+                d3.select("input#year-slider").attr("value", this.value)
+                // read
+                let gender = d3.select("select#gender-dropdown").attr("value");
+                // call function
+                drawMapChart(this.value, gender, 1);
+                drawBarChart(this.value, gender, 1);
+            });
+            
+        d3.select("select#gender-dropdown")
+            .on("input", function () {
+                // set
+                d3.select("select#gender-dropdown").attr("value", this.value);
+                // read
+                let year = d3.select("input#year-slider").attr("value");
+                // call function
+                drawMapChart(year, this.value, 1);
+                drawBarChart(year, this.value, 1);
+                
             });
     </script>
 </body>
