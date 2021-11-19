@@ -40,10 +40,17 @@
         <input id="year-slider" width="200" type="range" min="2001" max="2014" step="1" value="2001">
 
         <select id="gender-dropdown" style="width:70px;" value="M">
-          <option value="M" selected>Male</option>
-          <option value="F">Female</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
         </select>
-    </div>    
+
+        <select id="quartile-dropdown" style="width:70px;" value="1">
+            <option value="1">Q1</option>
+            <option value="2">Q2</option>
+            <option value="3">Q3</option>
+            <option value="4">Q4</option>
+        </select>
+    </div>
 
     <div class="marc-map">
         <svg id="map" width="600" height="300" style="border: 1px solid black;"></svg>
@@ -74,6 +81,8 @@
             year = Number(year);
             gender = gender.toUpperCase();
             quartile = Number(quartile);
+
+            console.log(year + " " + gender + " " + quartile);
 
             let query = `le_agg_q${quartile}_${gender}`;
             let filteredData = data.filter(d => d.year === year);
@@ -131,7 +140,9 @@
             year = Number(year);
             gender = gender.toUpperCase();
             quartile = Number(quartile);
-            
+
+            console.log(year + " " + gender + " " + quartile);
+
             let barChartQuery = `le_agg_q${quartile}_${gender}`;
 
 
@@ -202,21 +213,36 @@
                 d3.select("input#year-slider").attr("value", this.value)
                 // read
                 let gender = d3.select("select#gender-dropdown").attr("value");
+                let quartile = d3.select("select#quartile-dropdown").attr("value");
                 // call function
-                drawMapChart(this.value, gender, 1);
-                drawBarChart(this.value, gender, 1);
+                drawMapChart(this.value, gender, quartile);
+                drawBarChart(this.value, gender, quartile);
             });
-            
+
         d3.select("select#gender-dropdown")
             .on("input", function () {
                 // set
                 d3.select("select#gender-dropdown").attr("value", this.value);
                 // read
                 let year = d3.select("input#year-slider").attr("value");
+                let quartile = d3.select("select#quartile-dropdown").attr("value");
                 // call function
-                drawMapChart(year, this.value, 1);
-                drawBarChart(year, this.value, 1);
-                
+                drawMapChart(year, this.value, quartile);
+                drawBarChart(year, this.value, quartile);
+
+            });
+
+        d3.select("select#quartile-dropdown")
+            .on("input", function () {
+                // set
+                d3.select("select#quartile-dropdown").attr("value", this.value);
+                // read
+                let year = d3.select("input#year-slider").attr("value");
+                let gender = d3.select("select#gender-dropdown").attr("value");
+                // call function
+                drawMapChart(year, gender, this.value);
+                drawBarChart(year, gender, this.value);
+
             });
     </script>
 </body>
