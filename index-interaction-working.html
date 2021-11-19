@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Expectancy</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+
+    <style>
+        .state {
+            fill: lightgrey;
+        }
+
+        .border {
+            stroke: rgb(255, 255, 255);
+            stroke-width: 1px;
+            fill: none;
+        }
+
+        #map-legend {
+            font-size: 12px;
+        }
+
+        .gridlines .domain {
+            display: none;
+        }
+
+        .gridlines line {
+            stroke: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="interaction-slider">
+        <input id="slider" width="200" type="range" min="2001" max="2014" step="1" value="2001">
+    </div>
+
+    <div class="marc-map">
+        <svg id="map" width="600" height="300" style="border: 1px solid black;"></svg>
+        <svg id="map-legend" width="140" height="160" style="border: 1px solid black;"></svg>
+    </div>
+
+    <script>
+        let svg1 = d3.select('#map');
+        let width = svg1.attr('width');
+        let height = svg1.attr('height');
+        let padding = { top: 20, right: 20, bottom: 20, left: 20 };
+        let mapWidth = width - padding.left - padding.right;
+        let mapHeight = height - padding.top - padding.bottom;
+
+        // FUNC1: map chart function
+        async function drawMapChart(year, gender, quartile) {
+            // color scale
+            let colorScale = d3.scaleQuantile()
+                .domain([71.78865, 92.63532])
+                .range(['#D1DCE2', '#93C0D8', '#44A8DE', '#3260AF', '#22297F', '#1F134D']);
+
+            // life data
+            let data = await d3.csv('health_ineq.csv', d3.autoType);
+            // -- build stateLifeExpectancy from data
+            year = Number(year);
+            gender = gender.toUpperCase();
+            quartile = Number(quartile);
+
+            let query = `le_agg_q${quartile}_${gender}`;
+            let filteredData = data.filter(d => d.year === year);
+
+            let stateLifeExpectancy = {};
+            filteredData.forEach(row => {
+                stateLifeExpectancy[row.id] = Number(row[query]);
+            });
+
+            // map data
+            let usa = await d3.json('us-smaller.json');
+            let states = topojson.feature(usa, usa.objects.states);
+            let statesMesh = topojson.mesh(usa, usa.objects.states);
+            let projection = d3.geoAlbersUsa().fitSize([mapWidth, mapHeight], states);
+            let path = d3.geoPath().projection(projection);
+
+            // draw map
+            let map = svg1.append("g")
+                .attr('transform', `translate(${padding.left}, ${padding.top})`);
+
+            map.selectAll('path.state')
+                .data(states.features)
+                .join('path')
+                .attr('class', 'state')
+                .attr('id', d => d.id)
+                .attr('d', path)
+                .style('fill', d => colorScale(stateLifeExpectancy[d.id]));
+
+            map.append('path')
+                .datum(statesMesh)
+                .attr('class', 'border')
+                .attr('d', path);
+
+            // legend
+            let legend1 = d3.select('#map-legend');
+
+            legend1.append("g")
+                .attr("class", "legendQuant")
+                .attr("transform", "translate(20,20)");
+
+            let legendGen = d3.legendColor()
+                .labelFormat(d3.format(".2f"))
+                .title("Life Expectancy (in years)")
+                .titleWidth(100)
+                .scale(colorScale);
+
+            legend1.select(".legendQuant")
+                .call(legendGen);
+        };
+        drawMapChart(2001, 'M', 4);
+
+        // INTERACTION: slider
+        d3.select("input#slider")
+            .on("input", function () {
+                drawMapChart(this.value, 'M', 3);
+            });
+    </script>
+</body>
+
+</html>
