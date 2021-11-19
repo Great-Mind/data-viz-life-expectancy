@@ -158,7 +158,8 @@
             let annotations = svg2.append("g").attr("id", "annotations");
             let chartArea = svg2.append("g").attr("id", "points").attr("transform", `translate(${chartPadding.left},${chartPadding.top})`);
 
-            let data = await d3.csv('health_ineq_online_table_5.csv', d3.autoType);
+            // let data = await d3.csv('health_ineq_online_table_5.csv', d3.autoType);
+            let data = await d3.csv('health_ineq.csv', d3.autoType);
             let filteredData = data.filter(d => d.year === year);
             filteredData.sort((a, b) => a[barChartQuery] - b[barChartQuery]);
             let final = filteredData.slice(0, 3).concat(filteredData.slice(-3));
