@@ -11,6 +11,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
 
     <style>
+        body {
+            font-family: 'Inter', 'Helvetica', sans-serif;
+            color: rgb(36, 36, 36);
+        }
         .state {
             fill: lightgrey;
         }
@@ -32,32 +36,86 @@
         .gridlines line {
             stroke: #ccc;
         }
+
+        datalist {
+            display: inline;
+        }
+        option {
+            display: inline;
+            margin-right: 16px;
+        }
+        #year-slider {
+            width: 650px;
+            margin-left: 11px;
+        }
+
+        .gender-radio {
+            display: inline;
+        }
+        #tickmarks {
+            font-size: 11px;
+        }
+        .selectors {
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 5%;
+        }
     </style>
 </head>
 
 <body>
-    <h1></h1>
-    <div class="interaction-slider">
-        <input id="year-slider" width="200" type="range" min="2001" max="2014" step="1" value="2001">
-
-        <select id="gender-dropdown" style="width:70px;" value="M">
+    <h2>Life Expectancy in United States based on Year, Gender, and Income Quartile</h2>
+    <div class="selectors">
+        <label for="year-slider">Year</label><br>
+        <input id="year-slider" type="range" min="2001" max="2014" step="1" value="2001" list="tickmarks">
+        <br>
+        <datalist id="tickmarks">
+            <option value="2001" label="2001"></option>
+            <option value="2002" label="2002"></option>
+            <option value="2003" label="2003"></option>
+            <option value="2004" label="2004"></option>
+            <option value="2005" label="2005"></option>
+            <option value="2006" label="2006"></option>
+            <option value="2007" label="2007"></option>
+            <option value="2008" label="2008"></option>
+            <option value="2009" label="2009"></option>
+            <option value="2010" label="2010"></option>
+            <option value="2011" label="2011"></option>
+            <option value="2012" label="2012"></option>
+            <option value="2013" label="2013"></option>
+            <option value="2014" label="2014"></option>
+        </datalist>
+        <br>
+        <br>
+        <!-- <select id="gender-dropdown" style="width:70px;" value="M">
             <option value="M">Male</option>
             <option value="F">Female</option>
-        </select>
-
-        <select id="quartile-dropdown" style="width:70px;" value="1">
-            <option value="1">Q1</option>
+        </select> -->
+    </div>
+        <div class="selectors">
+        Gender<br>
+        <input type="radio" id="male" value="M" name="gender" class="gender-radio" checked>
+        <label for="male">M</label><br>
+        <input type="radio" id="female" value="F" name="gender" class="gender-radio">
+        <label for="female">F</label>
+    </div>
+    <div class="selectors">
+        Income Quartile<br>
+        <select id="quartile-dropdown" style="width:100px;" value="1">
+            <option value="1">Q1 (lowest)</option>
             <option value="2">Q2</option>
             <option value="3">Q3</option>
-            <option value="4">Q4</option>
+            <option value="4">Q4 (highest)</option>
         </select>
+        <br>
     </div>
-
+<br>
+<br>
     <div class="marc-map">
         <svg id="map" width="600" height="300" style="border: 1px solid black;"></svg>
-        <svg id="map-legend" width="140" height="160" style="border: 1px solid black;"></svg>
+        <svg id="map-legend" width="140" height="250" style="border: 1px solid black;"></svg>
     </div>
-
+    <h3>Life Expectancy of Bottom 3 States and Top 3 States</h3>
     <div class="erika-barchart">
         <svg id="barchart" width="600" height="300" style="border: 1px solid black;"></svg>
     </div>
@@ -82,8 +140,6 @@
             year = Number(year);
             gender = gender.toUpperCase();
             quartile = Number(quartile);
-
-            console.log(year + " " + gender + " " + quartile);
 
             let query = `le_agg_q${quartile}_${gender}`;
             let filteredData = data.filter(d => d.year === year);
@@ -142,8 +198,6 @@
             gender = gender.toUpperCase();
             quartile = Number(quartile);
 
-            console.log(year + " " + gender + " " + quartile);
-
             let barChartQuery = `le_agg_q${quartile}_${gender}`;
 
 
@@ -151,18 +205,19 @@
 
             let width = svg2.attr('width');
             let height = svg2.attr('height');
-            let chartPadding = { top: 20, right: 20, bottom: 40, left: 40 };
+            let chartPadding = { top: 20, right: 20, bottom: 60, left: 60 };
             let chartWidth = width - chartPadding.left - chartPadding.right;
             let chartHeight = height - chartPadding.top - chartPadding.bottom;
 
             let annotations = svg2.append("g").attr("id", "annotations");
             let chartArea = svg2.append("g").attr("id", "points").attr("transform", `translate(${chartPadding.left},${chartPadding.top})`);
 
-            // let data = await d3.csv('health_ineq_online_table_5.csv', d3.autoType);
             let data = await d3.csv('health_ineq.csv', d3.autoType);
             let filteredData = data.filter(d => d.year === year);
             filteredData.sort((a, b) => a[barChartQuery] - b[barChartQuery]);
-            let final = filteredData.slice(0, 3).concat(filteredData.slice(-3));
+            let bottom_3 = filteredData.slice(0,3);
+            let top_3 = filteredData.slice(-3);
+            let final = bottom_3.concat(top_3);
 
             const lifeExtent = d3.extent(final, d => d[barChartQuery]);
             const lifeScale = d3.scaleLinear()
@@ -179,27 +234,46 @@
             let leftGridlines = d3.axisLeft(lifeScale)
                 .tickSize(-chartWidth - 10)
                 .tickFormat("")
+            
             annotations.append("g")
                 .attr("class", "y axis")
                 .attr("transform", `translate(${chartPadding.left - 10},${chartPadding.top})`)
                 .call(leftAxis)
+            svg2.append("text")             
+                .style("text-anchor", "end")
+                .attr("transform", "rotate(-90) translate(-60, 19)")
+                .style("font-size", "13px")
+                .text("Life Expectancy (in years)");
             annotations.append("g")
                 .attr("class", "y gridlines")
                 .attr("transform", `translate(${chartPadding.left - 10},${chartPadding.top})`)
                 .call(leftGridlines);
-
             let bottomAxis = d3.axisBottom()
                 .scale(stateScale);
             annotations.append("g")
                 .attr("class", "x axis")
                 .attr("transform", `translate(${chartPadding.left},${chartHeight + chartPadding.top + 10})`)
                 .call(bottomAxis);
-
-            chartArea.selectAll('rect.bar')
-                .data(final)
+            chartArea.append("text")             
+                     .attr("transform","translate(" + (chartWidth/2) + " ," + (chartHeight + chartPadding.top + 30) + ")")
+                     .style("text-anchor", "middle")
+                     .style("font-size", "13px")
+                     .text("States");
+            chartArea.selectAll('rect.bottom')
+                .data(bottom_3)
                 .join('rect')
-                .attr('class', 'bar')
-                .attr("fill", "#3C60A9")
+                .attr('class', 'bottom')
+                .attr("fill", "#ef5858")
+                .attr("x", d => stateScale(d['statename']))
+                .attr("y", d => lifeScale(d[barChartQuery]))
+                .attr("height", d => lifeScale(lifeExtent[0] - 1) - lifeScale(d[barChartQuery]))
+                .attr("width", stateScale.bandwidth());
+
+            chartArea.selectAll('rect.top')
+                .data(top_3)
+                .join('rect')
+                .attr('class', 'top')
+                .attr("fill", "#5dd894")
                 .attr("x", d => stateScale(d['statename']))
                 .attr("y", d => lifeScale(d[barChartQuery]))
                 .attr("height", d => lifeScale(lifeExtent[0] - 1) - lifeScale(d[barChartQuery]))
@@ -214,23 +288,24 @@
                 // set
                 d3.select("input#year-slider").attr("value", this.value)
                 // read
-                let gender = d3.select("select#gender-dropdown").attr("value");
+                let gender = d3.select('input[name="gender"]:checked').node().value;
                 let quartile = d3.select("select#quartile-dropdown").attr("value");
                 // call function
                 drawMapChart(this.value, gender, quartile);
                 drawBarChart(this.value, gender, quartile);
             });
 
-        d3.select("select#gender-dropdown")
-            .on("input", function () {
-                // set
-                d3.select("select#gender-dropdown").attr("value", this.value);
+        d3.selectAll("input[name='gender']")
+            .on("change", function () {
+                // // set
+                // d3.select("select#gender-dropdown").attr("value", this.value);
+                let gender = d3.select('input[name="gender"]:checked').node().value
                 // read
                 let year = d3.select("input#year-slider").attr("value");
                 let quartile = d3.select("select#quartile-dropdown").attr("value");
                 // call function
-                drawMapChart(year, this.value, quartile);
-                drawBarChart(year, this.value, quartile);
+                drawMapChart(year, gender, quartile);
+                drawBarChart(year, gender, quartile);
 
             });
 
@@ -240,7 +315,7 @@
                 d3.select("select#quartile-dropdown").attr("value", this.value);
                 // read
                 let year = d3.select("input#year-slider").attr("value");
-                let gender = d3.select("select#gender-dropdown").attr("value");
+                let gender = d3.select('input[name="gender"]:checked').node().value
                 // call function
                 drawMapChart(year, gender, this.value);
                 drawBarChart(year, gender, this.value);
